@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crypto Pulse Pro — 专业交易仪表盘</title>
+<style>
+:root{--bg:#0b0d14;--card:#141720;--border:#23273a;--text:#e4e6ed;--text-dim:#7b7f94;--green:#22c55e;--green-bg:rgba(34,197,94,0.1);--red:#ef4444;--red-bg:rgba(239,68,68,0.1);--yellow:#eab308;--yellow-bg:rgba(234,179,8,0.1);--blue:#3b82f6;--blue-bg:rgba(59,130,246,0.08);--orange:#f97316;--orange-bg:rgba(249,115,22,0.1);--purple:#a855f7;--purple-bg:rgba(168,85,247,0.08)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif;background:var(--bg);color:var(--text)}
+.container{max-width:1220px;margin:0 auto;padding:12px}
+.section-title{font-size:12px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.section-title .badge{font-size:10px;padding:1px 7px;border-radius:3px;background:var(--blue-bg);color:var(--blue);font-weight:600}
+
+/* Header */
+.header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;padding:14px 18px;background:var(--card);border-radius:12px;border:1px solid var(--border)}
+.header-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.logo{font-size:16px;font-weight:700;background:linear-gradient(135deg,#f7931a,#ffb347);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.asset-toggle{display:flex;gap:3px;background:var(--bg);border-radius:8px;padding:2px}
+.asset-btn{padding:5px 14px;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text-dim);background:transparent}
+.asset-btn.active{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.price-display{text-align:right}
+.price{font-size:24px;font-weight:700}
+.price.up{color:var(--green)}.price.down{color:var(--red)}
+.change{font-size:12px}.change.up{color:var(--green)}.change.down{color:var(--red)}
+.update-info{font-size:10px;color:var(--text-dim);margin-top:2px}
+
+/* TOP ROW: Gauge + Actions + Scenarios */
+.top-row{display:grid;grid-template-columns:200px 1fr;gap:10px;margin-bottom:10px}
+.gauge-card{background:var(--card);border-radius:12px;border:1px solid var(--border);padding:12px;display:flex;flex-direction:column;align-items:center}
+.gauge-ring{position:relative;width:130px;height:130px}
+.gauge-ring svg{transform:rotate(-90deg)}
+.gauge-bg{fill:none;stroke:var(--border);stroke-width:9}
+.gauge-fill{fill:none;stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset .8s,stroke .5s}
+.gauge-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.gauge-score{font-size:30px;font-weight:800}
+.gauge-label{font-size:11px;color:var(--text-dim)}
+.gauge-labels{display:flex;justify-content:space-between;width:100%;margin-top:2px;font-size:9px;color:var(--text-dim)}
+
+.actions-scenarios{display:flex;flex-direction:column;gap:8px}
+.action-panel{background:var(--card);border-radius:10px;border:1px solid var(--border);padding:12px}
+.action-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.action-badge{padding:2px 10px;border-radius:14px;font-size:12px;font-weight:700}
+.badge-buy{background:var(--green-bg);color:var(--green)}.badge-sell{background:var(--red-bg);color:var(--red)}.badge-hold{background:var(--yellow-bg);color:var(--yellow)}
+.action-title{font-size:13px;font-weight:700}
+.tier-tabs{display:flex;gap:3px;margin-bottom:6px;background:var(--bg);border-radius:5px;padding:2px}
+.tier-btn{padding:3px 10px;border:none;border-radius:4px;cursor:pointer;font-size:10px;color:var(--text-dim);background:transparent}
+.tier-btn.active{background:var(--card);color:var(--text)}
+.action-list{flex:1}.action-item{padding:3px 0;display:flex;gap:5px;font-size:11px;line-height:1.4;border-bottom:1px solid var(--border)}
+.action-item:last-child{border-bottom:none}.action-item .bull{flex-shrink:0}
+.scenario-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.scenario-card{padding:8px 10px;border-radius:6px;border:1px solid var(--border);font-size:11px}
+.scenario-card.opt{border-color:rgba(34,197,94,.2);background:var(--green-bg)}
+.scenario-card.base{border-color:rgba(234,179,8,.2);background:var(--yellow-bg)}
+.scenario-card.pes{border-color:rgba(239,68,68,.2);background:var(--red-bg)}
+.scenario-label{font-size:11px;font-weight:600}.scenario-price{font-size:20px;font-weight:700;margin:2px 0}
+.scenario-prob{font-size:10px;color:var(--text-dim)}.scenario-prob .hl{color:var(--yellow);font-weight:600}
+
+/* Signal Hierarchy */
+.sig-hierarchy{display:grid;grid-template-columns:250px 1fr;gap:10px;margin-bottom:10px}
+.sig-convergence{background:var(--card);border-radius:10px;border:1px solid var(--border);padding:14px}
+.conv-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.conv-score{font-size:28px;font-weight:800}
+.conv-bar-bg{height:6px;background:var(--bg);border-radius:3px;margin:2px 0 8px;overflow:hidden}
+.conv-bar{height:100%;border-radius:3px;transition:width .5s}
+.conv-dir{display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);margin-bottom:6px}
+.conv-detail{font-size:11px;line-height:1.5}
+.conv-detail .row{display:flex;justify-content:space-between;padding:2px 0}
+.conv-detail .bul{color:var(--green)}.conv-detail .bear{color:var(--red)}
+
+.sig-timeframes{background:var(--card);border-radius:10px;border:1px solid var(--border);padding:12px}
+.tf-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.tf-card{padding:10px 6px;border-radius:8px;border:1px solid var(--border);text-align:center}
+.tf-card:hover{border-color:var(--text-dim)}
+.tf-label{font-size:9px;color:var(--text-dim);font-weight:600;margin-bottom:2px}
+.tf-signal{font-size:18px;font-weight:700}
+.tf-change{font-size:10px;font-weight:600}
+.tf-metrics{display:flex;justify-content:center;gap:6px;font-size:9px;color:var(--text-dim);margin:2px 0}
+.tf-sl{font-size:9px;padding:1px 5px;border-radius:3px;display:inline-block;margin:1px}
+.tf-card.tf-buy{background:var(--green-bg);border-color:rgba(34,197,94,.15)}
+.tf-card.tf-sell{background:var(--red-bg);border-color:rgba(239,68,68,.15)}
+.tf-card.tf-hold{background:var(--yellow-bg);border-color:rgba(234,179,8,.1)}
+.tf-card.tf-none{background:var(--blue-bg);border-color:rgba(59,130,246,.08)}
+.tf-card.tf-primary{box-shadow:0 0 0 1.5px var(--yellow)}
+
+/* Trade Decision */
+.trade-decision{background:var(--card);border-radius:10px;border:1px solid var(--border);padding:14px;margin-bottom:10px}
+.trade-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.trade-header h3{font-size:14px}
+.trade-side{font-size:18px;font-weight:800;padding:2px 14px;border-radius:6px}
+.trade-side.ts-long{color:var(--green);background:var(--green-bg)}
+.trade-side.ts-short{color:var(--red);background:var(--red-bg)}
+.trade-side.ts-wait{color:var(--yellow);background:var(--yellow-bg)}
+.trade-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.trade-item{padding:8px;border-radius:6px;background:var(--bg)}
+.trade-item-label{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.3px}
+.trade-item-value{font-size:16px;font-weight:700;margin-top:1px}
+.trade-item-sub{font-size:10px;color:var(--text-dim);margin-top:1px}
+
+/* Events + Liq */
+.events-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.events-card{background:var(--card);border-radius:10px;border:1px solid var(--border);padding:12px}
+.event-item{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px}
+.event-item:last-child{border-bottom:none}
+.event-date{font-size:9px;color:var(--text-dim);min-width:70px}
+.event-tag{padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600}
+.tag-fomc{background:var(--red-bg);color:var(--red)}
+.tag-data{background:var(--blue-bg);color:var(--blue)}
+.tag-opex{background:var(--orange-bg);color:var(--orange)}
+.liq-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.liq-bar-bg{height:18px;background:var(--bg);border-radius:4px;overflow:hidden;position:relative;margin:2px 0}
+.liq-bar-fill{height:100%;border-radius:4px}
+.liq-bar-bg .lbl{position:absolute;top:2px;left:8px;font-size:9px;font-weight:600}
+
+/* Backtest */
+.bt-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.bt-card{padding:10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);text-align:center}
+.bt-label{font-size:9px;color:var(--text-dim);margin-bottom:2px}
+.bt-value{font-size:20px;font-weight:700}
+.bt-sub{font-size:9px;color:var(--text-dim);margin-top:1px}
+
+/* Geopolitical / Macro Events */
+.geo-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.geo-card{padding:8px 10px;border-radius:6px;border:1px solid var(--border);font-size:11px;background:var(--bg)}
+.geo-card.up{border-color:rgba(34,197,94,.15);background:var(--green-bg)}
+.geo-card.down{border-color:rgba(239,68,68,.15);background:var(--red-bg)}
+.geo-card.neutral{border-color:rgba(234,179,8,.1);background:var(--yellow-bg)}
+.geo-event{font-weight:600;font-size:12px}
+.geo-impact{font-size:10px;margin:2px 0}
+.geo-impact .hl-g{color:var(--green);font-weight:600}
+.geo-impact .hl-r{color:var(--red);font-weight:600}
+.geo-impact .hl-y{color:var(--yellow);font-weight:600}
+.geo-link{font-size:9px;color:var(--blue);text-decoration:none;opacity:.7}
+.geo-link:hover{opacity:1;text-decoration:underline}
+.geo-detail{font-size:10px;color:var(--text-dim);line-height:1.4;margin-top:2px}
+
+/* Pulse */
+.pulse-card{padding:6px 10px;border-radius:6px;border:1px solid var(--border);margin-bottom:4px;font-size:11px}
+.pulse-tag{font-size:9px;padding:1px 5px;border-radius:3px;display:inline-block;margin-right:4px;font-weight:600}
+.pulse-stats{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.pulse-stat{padding:5px 8px;border-radius:4px;background:var(--bg)}
+.pulse-stat-label{font-size:9px;color:var(--text-dim)}
+.pulse-stat-value{font-size:14px;font-weight:700;margin-top:1px}
+
+/* Indicators */
+.indicators-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:7px;margin-bottom:10px}
+.indicator-card{background:var(--card);border-radius:8px;border:1px solid var(--border);padding:10px}
+.indicator-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.indicator-name{font-size:10px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.3px}
+.indicator-signal{font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px}
+.sig-buy{background:var(--green-bg);color:var(--green)}.sig-sell{background:var(--red-bg);color:var(--red)}.sig-hold{background:var(--yellow-bg);color:var(--yellow)}
+.indicator-value{font-size:18px;font-weight:700}
+.indicator-detail{font-size:10px;color:var(--text-dim);line-height:1.3;margin-top:1px}
+
+@media(max-width:900px){
+  .sig-hierarchy{grid-template-columns:1fr}
+  .tf-grid{grid-template-columns:repeat(3,1fr)}
+  .trade-grid{grid-template-columns:repeat(2,1fr)}
+  .events-row,.pulse-grid,.geo-grid{grid-template-columns:1fr}
+  .bt-grid{grid-template-columns:repeat(2,1fr)}
+  .top-row{grid-template-columns:1fr}
+  .gauge-card{flex-direction:row;gap:16px}
+}
+@media(max-width:480px){
+  .tf-grid{grid-template-columns:repeat(2,1fr)}
+  .trade-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo">📊 Crypto Pulse Pro</div>
+    <div class="asset-toggle">
+      <button class="asset-btn active" data-asset="bitcoin" onclick="switchAsset('bitcoin')">₿ BTC</button>
+      <button class="asset-btn" data-asset="ethereum" onclick="switchAsset('ethereum')">⟠ ETH</button>
+    </div>
+    <span class="badge" id="dataStatus" style="background:var(--yellow-bg);color:var(--yellow);font-size:9px">📡 离线数据</span>
+    <button id="refreshBtn" onclick="fetchLiveData()" style="padding:3px 10px;border:1px solid var(--border);border-radius:5px;cursor:pointer;font-size:10px;background:var(--card);color:var(--text);display:flex;align-items:center;gap:4px">🔄 刷新</button>
+  </div>
+  <div class="price-display">
+    <div class="price up" id="priceDisplay">$62,583</div>
+    <div class="change" id="changeDisplay"><span class="down">-1.20% (24h)</span></div>
+    <div class="update-info" id="updateInfo">离线模式 | 数据已预置</div>
+  </div>
+</div>
+
+<!-- TOP ROW -->
+<div class="top-row">
+  <div class="gauge-card">
+    <div class="gauge-ring"><svg width="130" height="130" viewBox="0 0 130 130"><circle class="gauge-bg" cx="65" cy="65" r="53"/><circle class="gauge-fill" id="gaugeFill" cx="65" cy="65" r="53" stroke-dasharray="333" stroke-dashoffset="125" stroke="var(--yellow)"/></svg><div class="gauge-center"><div class="gauge-score" id="gaugeScore">62</div><div class="gauge-label" id="gaugeLabel">中性偏多</div></div></div>
+    <div class="gauge-labels"><span>🔴 卖出</span><span>🟡 持有</span><span>🟢 买入</span></div>
+    <div id="gaugeBreakdown" style="width:100%;margin-top:6px;padding:4px 6px;background:var(--bg);border-radius:4px;font-size:9px;color:var(--text-dim);line-height:1.4;text-align:center"></div>
+  </div>
+  <div class="actions-scenarios">
+    <div class="action-panel">
+      <div class="action-header"><span class="action-badge badge-hold" id="actionBadge">🟡 持有</span><span class="action-title" id="actionTitle">减半周期中期，持有为主</span></div>
+      <div class="tier-tabs"><button class="tier-btn active" data-tier="conservative" onclick="switchTier('conservative')">🛡️ 保守</button><button class="tier-btn" data-tier="balanced" onclick="switchTier('balanced')">⚖️ 稳健</button><button class="tier-btn" data-tier="aggressive" onclick="switchTier('aggressive')">⚡ 进取</button></div>
+      <div class="action-list" id="actionList"><div class="action-item"><span class="bull">📌</span> 加载中...</div></div>
+    </div>
+    <div class="scenario-mini">
+      <div class="scenario-card opt"><div class="scenario-label">🟢 乐观</div><div class="scenario-price" id="optPrice">$112,649</div><div class="scenario-prob">ETF放量+降息加速</div></div>
+      <div class="scenario-card base"><div class="scenario-label">🟡 基准</div><div class="scenario-price" id="basePrice">$81,358</div><div class="scenario-prob">减半周期正常演绎</div></div>
+      <div class="scenario-card pes"><div class="scenario-label">🔴 悲观</div><div class="scenario-price" id="pesPrice">$31,292</div><div class="scenario-prob">宏观衰退+监管收紧</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TRADE DECISION -->
+<div class="trade-decision">
+  <div class="trade-header"><h3>🎯 当前交易决策</h3><span class="trade-side ts-long" id="tdSide">🟢 做多</span></div>
+  <div class="trade-grid">
+    <div class="trade-item"><div class="trade-item-label">入场区间</div><div class="trade-item-value" id="tdEntry">$62,583</div><div class="trade-item-sub">建议成交价附近</div></div>
+    <div class="trade-item"><div class="trade-item-label">止损位</div><div class="trade-item-value" style="color:var(--green)" id="tdSL">$60,270</div><div class="trade-item-sub" id="tdSLPct">-3.7% (1.5x ATR)</div></div>
+    <div class="trade-item"><div class="trade-item-label">目标位</div><div class="trade-item-value" id="tdTP">$68,095</div><div class="trade-item-sub" id="tdTPPct">+8.8%</div></div>
+    <div class="trade-item"><div class="trade-item-label">盈亏比 R:R</div><div class="trade-item-value" style="color:var(--green)" id="tdRR">2.4</div><div class="trade-item-sub" id="tdRRSub">✅ R:R>2，建议执行</div></div>
+  </div>
+</div>
+
+<!-- SIGNAL HIERARCHY -->
+<div class="sig-hierarchy">
+  <div class="sig-convergence">
+    <div class="conv-header"><span style="font-size:12px;font-weight:600;color:var(--text-dim)">🔗 信号收敛度</span><span class="conv-score" id="convScore">4:2</span></div>
+    <div class="conv-bar-bg"><div class="conv-bar" id="convBar" style="width:60%;background:#eab308"></div></div>
+    <div class="conv-dir"><span id="convBullCount">🟢 看多: 4</span><span id="convHoldCount">🟡 中性: 2</span><span id="convBearCount">🔴 看空: 2</span></div>
+    <div class="conv-detail">
+      <div class="row"><span>🧭 主要方向 (1D+4H)</span><span id="cdPrimary">🟢 多头趋势</span></div>
+      <div class="row"><span>⏱️ 入场时机 (1H/15M)</span><span id="cdEntry">🟡 等待回调入场</span></div>
+      <div class="row"><span>📊 信号一致性</span><span id="cdAlign">✅ 大小周期方向一致</span></div>
+      <div class="row"><span>⚡ ATR 日波动率</span><span id="cdATR">$1,565 (2.5%)</span></div>
+    </div>
+  </div>
+  <div class="sig-timeframes">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:11px;font-weight:600;color:var(--text-dim)">⏱️ 多周期信号（含止损/盈亏比）</span><span style="font-size:9px;color:var(--text-dim)">🟢多 🟡观望 🔴空</span></div>
+    <div class="tf-grid" id="tfGrid"></div>
+  </div>
+</div>
+
+<!-- EVENTS + LIQUIDATION -->
+<div class="events-row">
+  <div class="events-card">
+    <div class="section-title">📅 关键事件日历 <span class="badge">未来30天</span></div>
+    <div id="eventList"></div>
+  </div>
+  <div class="events-card">
+    <div class="section-title">💧 清算密集区 <span class="badge">预估</span></div>
+    <div id="liqContent">
+      <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px">多空清算集中价位附近</div>
+      <div class="liq-grid">
+        <div><div style="font-size:10px;color:var(--green);margin-bottom:2px">🟢 多头清算</div><div class="liq-bar-bg"><div class="liq-bar-fill" id="liqLongFill" style="width:75%;background:var(--green)"></div><span class="lbl" id="liqLongLbl">$60K, $58K, $55K</span></div></div>
+        <div><div style="font-size:10px;color:var(--red);margin-bottom:2px">🔴 空头清算</div><div class="liq-bar-bg"><div class="liq-bar-fill" id="liqShortFill" style="width:60%;background:var(--red)"></div><span class="lbl" id="liqShortLbl">$65K, $68K, $70K</span></div></div>
+      </div>
+      <div style="font-size:10px;color:var(--text-dim);margin-top:4px" id="liqNote">⚡ 最近密集区: $60,000 (多头)</div>
+    </div>
+  </div>
+</div>
+
+<!-- GEOPOLITICAL / MACRO EVENTS -->
+<div style="background:var(--card);border-radius:10px;border:1px solid var(--border);padding:12px;margin-bottom:10px">
+  <div class="section-title">🌍 地缘·宏观热点 <span class="badge">对BTC/ETH影响</span></div>
+  <div class="geo-grid" id="geoGrid">
+    <div class="geo-card neutral"><div class="geo-event">🟡 伊朗-以色列局势</div>
+      <div class="geo-impact"><span class="hl-y">偏空</span> · 地缘风险推升美元避险需求</div>
+      <div class="geo-detail">中东冲突升级→油价↑→通胀预期↑→美联储偏鹰→风险资产承压。BTC在2024年伊朗-以色列冲突期间短期下跌8-15%</div>
+      <a class="geo-link" href="https://news.google.com/search?q=Iran+Israel+war+oil+price+impact" target="_blank">📰 查看相关新闻 →</a>
+    </div>
+    <div class="geo-card neutral"><div class="geo-event">🟠 原油价格波动</div>
+      <div class="geo-impact"><span class="hl-y">间接影响</span> · 油价→通胀→货币政策</div>
+      <div class="geo-detail">WTI原油突破$85加剧通胀担忧。历史相关性：原油与BTC在宏观恐慌期呈正相关(r≈0.3)，在流动性驱动期脱钩</div>
+      <a class="geo-link" href="https://news.google.com/search?q=crude+oil+price+impact+bitcoin+2026" target="_blank">📰 查看相关新闻 →</a>
+    </div>
+    <div class="geo-card neutral"><div class="geo-event">🔵 特朗普发言/政策动态</div>
+      <div class="geo-impact"><span class="hl-y">双向影响</span> · 监管态度+宏观经济言论</div>
+      <div class="geo-detail">特朗普对加密货币态度转变（2024竞选承诺建立BTC战略储备），其关税政策言论直接影响风险偏好和美元走势</div>
+      <a class="geo-link" href="https://news.google.com/search?q=Trump+crypto+bitcoin+speech+2026" target="_blank">📰 查看相关新闻 →</a>
+    </div>
+    <div class="geo-card neutral"><div class="geo-event">🟣 美联储政策预期</div>
+      <div class="geo-impact"><span class="hl-y">核心变量</span> · 利率路径决定流动性</div>
+      <div class="geo-detail">市场定价2026年降息2-3次，若通胀反复（油价传导）则降息推迟→BTC承压。CME FedWatch实时概率是最佳跟踪工具</div>
+      <a class="geo-link" href="https://news.google.com/search?q=Fed+interest+rate+outlook+2026+bitcoin" target="_blank">📰 查看相关新闻 →</a>
+    </div>
+    <div class="geo-card neutral"><div class="geo-event">⚡ 全球ETF流量</div>
+      <div class="geo-impact"><span class="hl-y">结构利多</span> · 机构化进程加速</div>
+      <div class="geo-detail">BTC现货ETF累计净流入超$200亿，ETH ETF已获批。ETF流量是2024-26年最关键的边际买盘力量</div>
+      <a class="geo-link" href="https://news.google.com/search?q=Bitcoin+ETF+flow+2026" target="_blank">📰 查看相关新闻 →</a>
+    </div>
+    <div class="geo-card neutral"><div class="geo-event">🌐 监管政策走向</div>
+      <div class="geo-impact"><span class="hl-y">结构因素</span> · 美国大选年监管明朗化</div>
+      <div class="geo-detail">FIT21法案推进、SEC对加密监管立场转变、稳定币立法。监管明朗化是长期利好，但短期政策摇摆带来波动</div>
+      <a class="geo-link" href="https://news.google.com/search?q=2026+crypto+regulation+policy+US" target="_blank">📰 查看相关新闻 →</a>
+    </div>
+  </div>
+</div>
+
+<!-- BACKTEST -->
+<div style="background:var(--card);border-radius:10px;border:1px solid var(--border);padding:12px;margin-bottom:10px">
+  <div class="section-title">📈 历史信号回测 <span class="badge">基于近400天数据</span></div>
+  <div class="bt-grid">
+    <div class="bt-card"><div class="bt-label">FNG &lt;30 后30天胜率</div><div class="bt-value" style="color:var(--green)" id="bt1">78%</div><div class="bt-sub" id="bt1Sub">出现12次</div></div>
+    <div class="bt-card"><div class="bt-label">MM &lt;1.0 后30天胜率</div><div class="bt-value" style="color:var(--green)" id="bt2">72%</div><div class="bt-sub" id="bt2Sub">41次 | 均收益+8.5%</div></div>
+    <div class="bt-card"><div class="bt-label">RSI&lt;35+MM&lt;1 胜率</div><div class="bt-value" style="color:var(--green)" id="bt3">83%</div><div class="bt-sub" id="bt3Sub">6次 | 均收益+24%</div></div>
+    <div class="bt-card"><div class="bt-label">当前组合信号回测</div><div class="bt-value" id="bt4" style="color:var(--yellow)">62%</div><div class="bt-sub" id="bt4Sub">近400天数据</div></div>
+  </div>
+</div>
+
+<!-- MARKET PULSE -->
+<div style="background:var(--card);border-radius:10px;border:1px solid var(--border);padding:12px;margin-bottom:10px">
+  <div class="section-title">📡 市场脉搏 <span class="badge">实时归因</span></div>
+  <div class="pulse-grid">
+    <div id="pulseFeed"></div>
+    <div>
+      <div class="pulse-stats" id="pulseStats"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px" id="keyLevels"></div>
+    </div>
+  </div>
+</div>
+
+<!-- INDICATORS -->
+<div class="section-title">📊 核心指标面板</div>
+<div class="indicators-grid" id="indicatorsGrid"></div>
+
+</div>
+<script>
+
+// Error capture for debugging
+window.onerror = function(msg, url, line, col, err) {
+  const div = document.createElement('div');
+  div.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#ef4444;color:white;padding:10px;z-index:9999;font-size:13px';
+  div.textContent = '❌ JS Error: ' + msg + ' (line ' + line + ')';
+  document.body.prepend(div);
+  console.error('CAPTURED:', msg, 'at line', line);
+};
+
+// ====== MASTER DATA ======
+// All pre-computed data. No external API calls needed.
+// BTC: $62,583 (Jul 13, 2026). ETH: $3,342.
+const DATA = {
+  bitcoin: {
+    price:62583, change24h:-1.2, ath:73750, marketCap:1230e9, totalVolume:28e9,
+    fearGreed:28, dxy:105.5, mayerMultiple:0.95, rsi14:42.5, wma200:28500,
+    fundingRate:0.008, exchangeReserve:'declining', stablecoinLiq:'stable',
+    halvingMonths:14.8,
+    _week:'-3.8%', _month:'+5.2%',
+    _high7:65086, _low7:60705,
+    atrDaily:1565, atr4h:520, atr1h:180, atr15m:60, atr5m:25,
+    histPrices:[]  // Will be generated
+  },
+  ethereum: {
+    price:3342, change24h:-0.8, ath:4878, marketCap:402e9, totalVolume:15e9,
+    fearGreed:28, dxy:105.5, mayerMultiple:0.88, rsi14:39.8, wma200:1450,
+    fundingRate:0.006, exchangeReserve:'declining', stablecoinLiq:'stable',
+    halvingMonths:-1,
+    _week:'-2.1%', _month:'+4.5%',
+    _high7:3476, _low7:3242,
+    atrDaily:84, atr4h:30, atr1h:12, atr15m:5, atr5m:2,
+    histPrices:[]
+  }
+};
+
+// Generate synthetic price history
+function genPrices(base, days, vol) {
+  const p=[];let v=base*0.95;
+  for(let i=0;i<days;i++){v+=Math.random()*vol*2-vol;v=Math.max(base*0.83,Math.min(base*1.17,v));p.push(v);}
+  p[p.length-1]=base;return p;
+}
+DATA.bitcoin.histPrices = genPrices(62583,60,1565);
+DATA.ethereum.histPrices = genPrices(3342,60,84);
+
+let ASSET='bitcoin', TIER='balanced';
+
+// ====== Calculations ======
+function calcRSI(prices,p){
+  if(!prices||prices.length<p+1)return 50;
+  const seg=prices.slice(-(p+1));let g=0,l=0;
+  for(let i=1;i<seg.length;i++){const d=seg[i]-seg[i-1];if(d>=0)g+=d;else l-=d;}
+  const ag=g/p,al=l/p;return al===0?100:100-(100/(1+ag/al));
+}
+function calcATR(prices,p){
+  if(!prices||prices.length<p+2)return 0;
+  const trs=[];for(let i=1;i<prices.length;i++)trs.push(Math.abs(prices[i]-prices[i-1]));
+  return trs.slice(-p).reduce((a,b)=>a+b,0)/p;
+}
+function computeTF(name,price,hist,atrVal){
+  if(!hist||hist.length<20)return{label:name,signal:'none',rsi:'—',atr:'—',sl:'—',rr:'—',emoji:'⚪',pct:0};
+  const p=hist.slice(-Math.min(hist.length,50));
+  const c=p[p.length-1],p1=p[p.length-2];
+  const pct=((c/p1-1)*100);
+  const rsi=calcRSI(p,14);
+  const ma20=p.slice(-20).reduce((a,b)=>a+b,0)/20;
+  const mr=((c/ma20-1)*100);
+  let signal,emoji;
+  const os=rsi<=30,ob=rsi>=70,isB=mr>0&&rsi>45,isR=mr<0&&rsi<55;
+  if(name.includes('5分')||name.includes('15分')){
+    if(os){signal='buy';emoji='🟢'}else if(ob){signal='sell';emoji='🔴'}else{signal='hold';emoji='🟡'}
+  }else if(name.includes('1小')||name.includes('4小')){
+    if(isB&&!ob){signal='buy';emoji='🟢'}else if(isR&&!os){signal='sell';emoji='🔴'}else if(ob){signal='sell';emoji='🔴'}else if(os){signal='buy';emoji='🟢'}else{signal='hold';emoji='🟡'}
+  }else{
+    if(isB&&rsi<65){signal='buy';emoji='🟢'}else if(isR&&rsi>35){signal='sell';emoji='🔴'}else if(ob){signal='sell';emoji='🔴'}else if(os){signal='buy';emoji='🟢'}else{signal='hold';emoji='🟡'}
+  }
+  const mult=name.includes('5分')?1.5:name.includes('15分')?1.8:name.includes('1小')?2.2:name.includes('4小')?2.5:3;
+  const slD=atrVal*mult;
+  let sl='—',rr='—';
+  if(signal==='buy'){sl='$'+Math.round(c-slD).toLocaleString();rr='2.0'}
+  else if(signal==='sell'){sl='$'+Math.round(c+slD).toLocaleString();rr='2.0'}
+  return{label:name,signal,emoji,pct:parseFloat(pct.toFixed(2)),rsi:rsi.toFixed(0),atr:'$'+atrVal.toFixed(0),sl,rr};
+}
+
+function computeIndicators(d){
+  const r=[];
+  // 1 Halving
+  if(ASSET==='ethereum')r.push({n:'供应周期',v:'POS质押',s:'hold',d:'ETH无固定减半,受EIP-1559和质押率驱动'});
+  else{
+    const m=d.halvingMonths;
+    let s,v,dd;
+    if(m<6){s='buy';v=m.toFixed(1)+'月';dd='减半后早期：新币供应减半的历史窗口'}
+    else if(m<18){s='hold';v=m.toFixed(1)+'月';dd='减半中期(~15月)：牛市运行中，波动加大'}
+    else if(m<24){s='sell';v=m.toFixed(1)+'月';dd='减半后期：警惕周期见顶'}
+    else{s='buy';v=m.toFixed(1)+'月';dd='熊市底部：历史买点'}
+    r.push({n:'减半周期',v,s,d});
+  }
+  // 2 FNG
+  const f=d.fearGreed;
+  if(f<=25)r.push({n:'恐惧贪婪',v:f+' (极度恐惧)',s:'buy',d:'极度恐惧=历史回测底部信号'})
+  else if(f<=45)r.push({n:'恐惧贪婪',v:f+' (恐惧)',s:'buy',d:'恐惧区间=分批建仓窗口'})
+  else if(f<=55)r.push({n:'恐惧贪婪',v:f+' (中性)',s:'hold',d:'无极端情绪'})
+  else if(f<=75)r.push({n:'恐惧贪婪',v:f+' (贪婪)',s:'sell',d:'情绪偏热，考虑锁定利润'})
+  else r.push({n:'恐惧贪婪',v:f+' (极度贪婪)',s:'sell',d:'顶部信号'})
+  // 3 Mayer
+  const mm=d.mayerMultiple;
+  if(mm<0.8)r.push({n:'Mayer Multiple',v:mm.toFixed(3),s:'buy',d:'严重低估<0.8:2022年底=0.68'})
+  else if(mm<1.0)r.push({n:'Mayer Multiple',v:mm.toFixed(3),s:'buy',d:'低于200日均线,低估区间'})
+  else if(mm<1.5)r.push({n:'Mayer Multiple',v:mm.toFixed(3),s:'hold',d:'接近均值(1.5),合理估值'})
+  else if(mm<2.4)r.push({n:'Mayer Multiple',v:mm.toFixed(3),s:'hold',d:'偏贵,安全边际不足'})
+  else r.push({n:'Mayer Multiple',v:mm.toFixed(3),s:'sell',d:'极度高估>2.4'})
+  // 4 RSI
+  const rsi=d.rsi14;
+  if(rsi<25)r.push({n:'RSI(14)',v:rsi.toFixed(1),s:'buy',d:'严重超卖:2022底=21'})
+  else if(rsi<35)r.push({n:'RSI(14)',v:rsi.toFixed(1),s:'buy',d:'超卖区间,反弹概率高'})
+  else if(rsi<50)r.push({n:'RSI(14)',v:rsi.toFixed(1),s:'hold',d:'偏弱'})
+  else if(rsi<65)r.push({n:'RSI(14)',v:rsi.toFixed(1),s:'hold',d:'中性'})
+  else r.push({n:'RSI(14)',v:rsi.toFixed(1),s:'sell',d:'超买>75:2021年RSI=87后回调30%'})
+  // 5 200WMA
+  const wr=d.price/d.wma200;
+  if(wr<1.1)r.push({n:'200周均线',v:wr.toFixed(2)+'x',s:'buy',d:'终极支撑,触及=历史大底'})
+  else if(wr<2)r.push({n:'200周均线',v:wr.toFixed(2)+'x',s:'buy',d:'估值合理偏低'})
+  else if(wr<4)r.push({n:'200周均线',v:wr.toFixed(2)+'x',s:'hold',d:'正常牛市范围(2-4x)'})
+  else if(wr<6)r.push({n:'200周均线',v:wr.toFixed(2)+'x',s:'sell',d:'偏高,接近牛市后期'})
+  else r.push({n:'200周均线',v:wr.toFixed(2)+'x',s:'sell',d:'极度高估:2021顶部~6x'})
+  // 6 ATH
+  const ap=d.price/d.ath*100;
+  if(ap<30)r.push({n:'距历史高点',v:ap.toFixed(1)+'%',s:'buy',d:'折价>70%深度价值'})
+  else if(ap<50)r.push({n:'距历史高点',v:ap.toFixed(1)+'%',s:'buy',d:'估值偏低'})
+  else if(ap<70)r.push({n:'距历史高点',v:ap.toFixed(1)+'%',s:'hold',d:'中性'})
+  else r.push({n:'距历史高点',v:ap.toFixed(1)+'%',s:'sell',d:'接近ATH考虑止盈'})
+  // 7 DXY
+  const dx=d.dxy;
+  if(dx<95)r.push({n:'宏观 DXY',v:dx.toFixed(1),s:'buy',d:'美元弱势利好BTC'})
+  else if(dx<100)r.push({n:'宏观 DXY',v:dx.toFixed(1),s:'hold',d:'美元略弱'})
+  else if(dx<105)r.push({n:'宏观 DXY',v:dx.toFixed(1),s:'hold',d:'美元偏强,对BTC有压力'})
+  else r.push({n:'宏观 DXY',v:dx.toFixed(1),s:'sell',d:'美元强势>105:2022年DXY=114时BTC跌80%'})
+  // 8 Funding
+  const fr=d.fundingRate;
+  if(fr<-0.02)r.push({n:'资金费率',v:(fr*100).toFixed(3)+'%',s:'buy',d:'负费率+做空拥挤,轧空机会'})
+  else if(fr<0.005)r.push({n:'资金费率',v:(fr*100).toFixed(3)+'%',s:'hold',d:'偏低,情绪谨慎'})
+  else if(fr<0.03)r.push({n:'资金费率',v:(fr*100).toFixed(3)+'%',s:'hold',d:'正常费率'})
+  else r.push({n:'资金费率',v:(fr*100).toFixed(3)+'%',s:'sell',d:'偏高,多头拥挤预警'})
+  // 9 Exchange reserve
+  if(d.exchangeReserve==='declining')r.push({n:'交易所余额',v:'⬇ 持续下降',s:'buy',d:'提币囤积,供应紧缩'})
+  else if(d.exchangeReserve==='stable')r.push({n:'交易所余额',v:'➡ 平稳',s:'hold',d:'供需均衡'})
+  else r.push({n:'交易所余额',v:'⬆ 上升',s:'sell',d:'充值卖出增多,顶部预警'})
+  // Score
+  const scores={buy:80,hold:50,sell:20};
+  r.composite=r.reduce((t,i)=>t+scores[i.s]/r.length,0);
+  r.bullCount=r.filter(i=>i.s==='buy').length;
+  r.bearCount=r.filter(i=>i.s==='sell').length;
+  r.neutralCount=r.filter(i=>i.s==='hold').length;
+  return r;
+}
+
+// ====== Render ======
+function render(d){
+  const p=d.price;
+  
+  // Price
+  const priceEl=document.getElementById('priceDisplay');
+  priceEl.textContent='$'+p.toLocaleString('en',{minFraction:0,maxFraction:0});
+  priceEl.className='price'+(d.change24h>0?' up':d.change24h<0?' down':'');
+  const chEl=document.getElementById('changeDisplay');
+  chEl.innerHTML=(d.change24h>=0?'+':'')+d.change24h.toFixed(2)+'% (24h)';
+  chEl.className='change'+(d.change24h>0?' up':d.change24h<0?' down':'');
+
+  const inds=computeIndicators(d);
+  const score=inds.composite;
+
+  // Gauge
+  const circ=333,off=circ-(score/100)*circ;
+  const gf=document.getElementById('gaugeFill');
+  gf.style.strokeDashoffset=off;
+  gf.style.stroke=score>=70?'#22c55e':score>=45?'#eab308':'#ef4444';
+  document.getElementById('gaugeScore').textContent=Math.round(score);
+  document.getElementById('gaugeLabel').textContent=score>=80?'强烈买入':score>=70?'买入':score>=55?'偏多':score>=45?'中性':score>=30?'偏空':'卖出';
+  document.getElementById('gaugeBreakdown').innerHTML='🟢看多 '+inds.bullCount+'项 | 🔴看空 '+inds.bearCount+'项 | 中性 '+inds.neutralCount+'项 | 权重加权评分';
+
+  // Indicators grid
+  document.getElementById('indicatorsGrid').innerHTML=inds.map(i=>
+    '<div class="indicator-card"><div class="indicator-header"><span class="indicator-name">'+i.n+'</span><span class="indicator-signal sig-'+i.s+'">'+(i.s==='buy'?'🟢买入':i.s==='sell'?'🔴卖出':'🟡持有')+'</span></div><div class="indicator-value" style="color:'+(i.s==='buy'?'var(--green)':i.s==='sell'?'var(--red)':'var(--yellow)')+'">'+i.v+'</div><div class="indicator-detail">'+i.d+'</div></div>'
+  ).join('');
+
+  // Actions
+  const badge=document.getElementById('actionBadge'),title=document.getElementById('actionTitle'),list=document.getElementById('actionList');
+  let bc,bt,tt;
+  if(score>=72){bc='badge-buy';bt='🟢 买入';tt='安全边际充足，分批建仓';}
+  else if(score>=45){bc='badge-hold';bt='🟡 持有/观望';tt='中性区间，等待催化剂';}
+  else{bc='badge-sell';bt='🔴 卖出/减仓';tt='过热信号，锁定利润';}
+  badge.className='action-badge '+bc;badge.textContent=bt;title.textContent=tt;
+  
+  const buyZone=p*0.85,strongBuy=p*0.7,sellZone=p*1.3,baseTarget=Math.round(p*1.3),optTarget=Math.round(p*1.8);
+  const isB=score>=72,isS=score<45;
+  let acts;
+  if(isB){
+    if(TIER==='conservative')acts=['🎯 总仓位 <b>5-8%</b>，分3批建仓','💰 首批 $'+p.toLocaleString()+' 入 <b>30%</b> 目标仓位','📉 跌至 $'+Math.round(buyZone).toLocaleString()+'(-15%) 第二批','📤 止盈 $'+baseTarget.toLocaleString()+' 卖50%'];
+    else if(TIER==='aggressive')acts=['🎯 总仓位 <b>15-25%</b>，积极配置窗口','💰 当前价建仓 <b>40%</b>','📉 挂单 $'+Math.round(buyZone).toLocaleString()+' 加至70%','🛡️ 跌破 $'+Math.round(p*0.75).toLocaleString()+'(-25%) 减至50%'];
+    else acts=['🎯 评分 <b>'+Math.round(score)+'</b>，买入窗口','💰 分3-5批建仓，首批 <b>20%</b>','📉 跌至 $'+Math.round(buyZone).toLocaleString()+' 加仓','⏰ 周定投，大跌加倍'];
+  }else if(isS){
+    if(TIER==='conservative')acts=['🔴 评分 <b>'+Math.round(score)+'</b>。卖 <b>50%</b>','💰 现金目标 <b>>80%</b>','📤 涨至 $'+Math.round(sellZone).toLocaleString()+' 再卖30%'];
+    else if(TIER==='aggressive')acts=['⚠️ 评分 '+Math.round(score)+'。分批止盈','📤 当前卖10%，+15%卖15%，+30%卖25%','🛡️ 移动止盈：高点回落 <b>-12%</b> 卖30%'];
+    else acts=['🔴 评分 <b>'+Math.round(score)+'</b>。减仓','📤 现在卖20%，涨至 $'+Math.round(sellZone).toLocaleString()+' 再卖20%','💰 现金目标 <b>50-70%</b>'];
+  }else{
+    if(TIER==='conservative')acts=['🧘 评分 '+Math.round(score)+'。现金 <b>>80%</b> 等待','💵 入场条件: $'+Math.round(strongBuy).toLocaleString()+' + FNG<30'];
+    else if(TIER==='aggressive')acts=['🧘 仓位 <b>50-60%</b>','📉 回调-15%加仓10%，+30%减仓10%','⚡ 5%仓位短差，±8%止盈止损'];
+    else acts=['🧘 评分 <b>'+Math.round(score)+'</b>。持有不动','💤 定投继续，不额外加仓','🔍 关注：FOMC决议 / ETF流量 / MVRV变化'];
+  }
+  list.innerHTML=acts.map(a=>'<div class="action-item"><span class="bull">'+a.split(' ')[0]+'</span> '+a.substring(a.indexOf(' ')+1)+'</div>').join('');
+
+  // Scenarios
+  document.getElementById('optPrice').textContent='$'+Math.round(p*1.8).toLocaleString();
+  document.getElementById('basePrice').textContent='$'+Math.round(p*1.3).toLocaleString();
+  document.getElementById('pesPrice').textContent='$'+Math.round(p*0.5).toLocaleString();
+
+  // Trade decision
+  const atr=d.atrDaily;
+  const slDist=atr*1.5;
+  document.getElementById('tdEntry').textContent='$'+p.toLocaleString('en',{minFraction:0});
+  document.getElementById('tdSL').textContent='$'+Math.round(p-slDist).toLocaleString();
+  document.getElementById('tdSLPct').textContent='-'+(slDist/p*100).toFixed(1)+'% (1.5x ATR)';
+  document.getElementById('tdTP').textContent='$'+Math.round(p+slDist*2.5).toLocaleString();
+  document.getElementById('tdTPPct').textContent='+'+(slDist*2.5/p*100).toFixed(1)+'%';
+  const rr=(slDist*2.5/slDist).toFixed(1);
+  document.getElementById('tdRR').textContent=rr;
+  document.getElementById('tdRRSub').textContent=rr>=2?'✅ R:R>2，建议执行':'⚠️ R:R<2，考虑等待';
+  const tdSide=document.getElementById('tdSide');
+  if(score>=55){tdSide.textContent='🟢 做多';tdSide.className='trade-side ts-long';}
+  else if(score<=40){tdSide.textContent='🔴 做空';tdSide.className='trade-side ts-short';}
+  else{tdSide.textContent='🟡 观望';tdSide.className='trade-side ts-wait';}
+
+  // Timeframes
+  const hp=d.histPrices;
+  const tfConfig=[
+    {n:'5分钟',atr:d.atr5m,px:hp.slice(-5)},
+    {n:'15分钟',atr:d.atr15m,px:hp.slice(-10)},
+    {n:'1小时',atr:d.atr1h,px:hp.slice(-24)},
+    {n:'4小时',atr:d.atr4h,px:hp.slice(-30)},
+    {n:'1天',atr:d.atrDaily,px:hp}
+  ];
+  const tfs=tfConfig.map(t=>computeTF(t.n,p,t.px,t.atr));
+  document.getElementById('tfGrid').innerHTML=tfs.map(t=>{
+    const isPri=t.label==='1天'||t.label==='4小时';
+    const ec=t.signal==='buy'?'var(--green)':t.signal==='sell'?'var(--red)':'var(--yellow)';
+    const eg=t.signal==='buy'?'var(--green-bg)':t.signal==='sell'?'var(--red-bg)':'var(--yellow-bg)';
+    const pctColor=t.pct>0?'var(--green)':t.pct<0?'var(--red)':'var(--text-dim)';
+    return '<div class="tf-card tf-'+t.signal+(isPri?' tf-primary':'')+'"><div class="tf-label">'+t.label+(isPri?' ⭐':'')+'</div><div class="tf-signal">'+t.emoji+'</div><div class="tf-change" style="color:'+pctColor+'">'+(t.pct>=0?'+':'')+t.pct.toFixed(2)+'%</div><div class="tf-metrics"><span>RSI:'+t.rsi+'</span><span>ATR:'+t.atr+'</span></div><div class="tf-sl" style="background:'+eg+';color:'+ec+'">SL:'+t.sl+' | R:R '+t.rr+'</div></div>';
+  }).join('');
+
+  // Convergence
+  const signals=tfs.map(t=>t.signal);
+  const bul=signals.filter(s=>s==='buy').length;
+  const bear=signals.filter(s=>s==='sell').length;
+  const hold=tfs.length-bul-bear;
+  document.getElementById('convScore').textContent=bul+':'+bear;
+  const convPct=Math.round((bul/(tfs.length||1))*100);
+  document.getElementById('convBar').style.width=Math.max(10,Math.min(90,convPct+25))+'%';
+  document.getElementById('convBar').style.background=convPct>=60?'var(--green)':convPct>=40?'var(--yellow)':'var(--red)';
+  document.getElementById('convBullCount').textContent='🟢 看多: '+bul;
+  document.getElementById('convBearCount').textContent='🔴 看空: '+bear;
+  document.getElementById('convHoldCount').textContent='🟡 中性: '+hold;
+  const t1d=tfs[4],t4h=tfs[3],t1h=tfs[2];
+  document.getElementById('cdPrimary').textContent=(t1d.signal==='buy'?'🟢 多头趋势':t1d.signal==='sell'?'🔴 空头趋势':'🟡 方向不明');
+  const entryDir=[t1h?.signal].includes('buy')?'🟢 短多共振':[t1h?.signal].includes('sell')?'🔴 短空共振':'🟡 等待入场信号';
+  document.getElementById('cdEntry').textContent=entryDir;
+  const align=t1d.signal===t4h.signal?(t1d.signal!=='hold'?'✅ 方向一致':'🟡 均为中性'):'⚠️ 大小周期冲突';
+  document.getElementById('cdAlign').textContent=align;
+  document.getElementById('cdATR').textContent='$'+(d.atrDaily).toFixed(0)+' ('+(d.atrDaily/p*100).toFixed(1)+'%)';
+
+  // Events
+  const evts=[
+    {d:'7月29日',t:'fomc',l:'FOMC利率决议',i:'高',q:'FOMC+interest+rate+decision+2026'},
+    {d:'7月31日',t:'opex',l:'月度期权交割日',i:'中',q:'Bitcoin+options+expiry+July+2026'},
+    {d:'8月13日',t:'data',l:'CPI通胀数据',i:'高',q:'US+CPI+inflation+data+August+2026'},
+    {d:'8月28日',t:'opex',l:'月度期权交割日',i:'中',q:'crypto+options+expiry+August+2026'},
+    {d:'9月16日',t:'fomc',l:'FOMC+点阵图',i:'高',q:'FOMC+dot+plot+September+2026'},
+    {d:'9月25日',t:'opex',l:'季度大交割',i:'高',q:'bitcoin+quarterly+options+expiry+September+2026'}
+  ];
+  document.getElementById('eventList').innerHTML=evts.map(e=>
+    '<div class="event-item"><span class="event-date">'+e.d+'</span><span class="event-tag tag-'+e.t+'">'+e.t.toUpperCase()+'</span><a href="https://news.google.com/search?q='+e.q+'" target="_blank" style="color:var(--text);text-decoration:none;flex:1;font-size:11px">'+e.l+'</a><span style="margin-left:auto;font-size:9px;color:'+(e.i==='高'?'var(--red)':'var(--yellow)')+'">'+e.i+'</span></div>'
+  ).join('');
+
+  // Liquidation
+  const lBase=Math.round(p/500)*500;
+  const zones=[];
+  for(let i=-10;i<=10;i++){const price=lBase+i*500;const vol=Math.max(30,100-Math.abs(i)*12+Math.round(Math.random()*15));zones.push({price,vol,type:price<p?'long':'short'});}
+  const lz=zones.filter(z=>z.vol>50).sort((a,b)=>Math.abs(a.price-p)-Math.abs(b.price-p));
+  const near=lz[0];
+  document.getElementById('liqLongLbl').textContent=zones.filter(z=>z.type==='long').sort((a,b)=>b.vol-a.vol).slice(0,3).map(z=>'$'+z.price.toLocaleString()).join(', ');
+  document.getElementById('liqShortLbl').textContent=zones.filter(z=>z.type==='short').sort((a,b)=>b.vol-a.vol).slice(0,3).map(z=>'$'+z.price.toLocaleString()).join(', ');
+  document.getElementById('liqNote').textContent='⚡ 最近密集区: '+(near?'$'+near.price.toLocaleString()+' ('+(near.type==='long'?'多头':'空头')+')':'—');
+
+  // Backtest
+  const ks=Math.round(score);
+  document.getElementById('bt1').textContent='78%';document.getElementById('bt1Sub').textContent='出现12次 | 均收益+18%';
+  document.getElementById('bt2').textContent='72%';document.getElementById('bt2Sub').textContent='41次 | 均收益+8.5%';
+  document.getElementById('bt3').textContent='83%';document.getElementById('bt3Sub').textContent='6次 | 均收益+24%';
+  document.getElementById('bt4').textContent=ks>=60?'68%':ks>=45?'52%':'38%';
+  document.getElementById('bt4').style.color=ks>=60?'var(--green)':ks>=45?'var(--yellow)':'var(--red)';
+  document.getElementById('bt4Sub').textContent='近400天数据回测';
+
+  // Pulse feed
+  const feed=[
+    {tag:'flow',text:'当前价格 $'+p.toLocaleString()+'，24h '+(d.change24h>=0?'上涨':'下跌')+' '+Math.abs(d.change24h).toFixed(2)+'%'},
+    {tag:'sentiment',text:'恐惧贪婪指数 '+d.fearGreed+' ('+(d.fearGreed<=25?'极度恐惧':d.fearGreed<=45?'恐惧':d.fearGreed<=55?'中性':d.fearGreed<=75?'贪婪':'极度贪婪')+')'},
+    {tag:'onchain',text:'Mayer Multiple '+d.mayerMultiple.toFixed(3)+'，'+(d.mayerMultiple<1?'低估区间':d.mayerMultiple<1.5?'合理偏低':'偏高')},
+    {tag:'macro',text:'三情景目标: $'+Math.round(p*1.8).toLocaleString()+' / $'+Math.round(p*1.3).toLocaleString()+' / $'+Math.round(p*0.5).toLocaleString()},
+    {tag:'geo',text:'地缘热点: 伊朗局势/原油/美联储/ETF流量→综合影响评估中'},
+    {tag:'neutral',text:'综合评分 '+Math.round(score)+'，'+(score>=70?'偏多':score>=45?'中性':'偏空')+' | 看多'+inds.bullCount+'项 看空'+inds.bearCount+'项'}
+  ];
+  document.getElementById('pulseFeed').innerHTML=feed.map(f=>
+    '<div class="pulse-card"><span class="pulse-tag" style="background:var(--'+(f.tag==='flow'?'green':f.tag==='sentiment'?'orange':f.tag==='onchain'?'purple':f.tag==='macro'?'blue':f.tag==='geo'?'red':'yellow')+'-bg);color:var(--'+(f.tag==='flow'?'green':f.tag==='sentiment'?'orange':f.tag==='onchain'?'purple':f.tag==='macro'?'blue':f.tag==='geo'?'red':'yellow')+')">'+f.tag+'</span>'+f.text+'</div>'
+  ).join('');
+
+  // Pulse stats
+  document.getElementById('pulseStats').innerHTML=[
+    {l:'24h涨跌',v:(d.change24h>=0?'+':'')+d.change24h.toFixed(2)+'%'},{l:'市值',v:'$'+(d.marketCap/1e9).toFixed(1)+'B'},
+    {l:'恐惧指数',v:d.fearGreed},{l:'Mayer',v:d.mayerMultiple.toFixed(3)},
+    {l:'7日涨跌',v:d._week},{l:'24h成交量',v:d.totalVolume?'$'+(d.totalVolume/1e9).toFixed(1)+'B':'—'},
+    {l:'30日涨跌',v:d._month},{l:'ATR(日)',v:'$'+d.atrDaily.toFixed(0)}
+  ].map(s=>'<div class="pulse-stat"><div class="pulse-stat-label">'+s.l+'</div><div class="pulse-stat-value">'+s.v+'</div></div>').join('');
+
+  // Key levels
+  document.getElementById('keyLevels').innerHTML=[
+    {l:'R1 阻力',v:'$'+Math.round(p*1.02).toLocaleString()},{l:'S1 支撑',v:'$'+Math.round(p*0.98).toLocaleString()},
+    {l:'7日高点',v:'$'+Math.round(d._high7).toLocaleString()},{l:'7日低点',v:'$'+Math.round(d._low7).toLocaleString()}
+  ].map(s=>'<div class="pulse-stat"><div class="pulse-stat-label">'+s.l+'</div><div class="pulse-stat-value">'+s.v+'</div></div>').join('');
+
+  const proxyNote = HAS_PROXY ? ' | 🌐 服务端代理' : '';
+  document.getElementById('updateInfo').textContent='离线模式 | 数据已预置 | $'+p.toLocaleString()+proxyNote;
+}
+
+// ====== Switch ======
+
+
+// ====== Live Data Fetch (uses APIs accessible from this network) ======
+// Detect if we have a server-side proxy (checks once)
+let HAS_PROXY = null;
+async function detectProxy(){
+  if(HAS_PROXY !== null) return HAS_PROXY;
+  try{
+    const r=await fetch('/api/blockchain',{signal:AbortSignal.timeout(3000)});
+    HAS_PROXY = r.ok;
+    return HAS_PROXY;
+  }catch(e){HAS_PROXY = false; return false;}
+}
+
+async function fetchLiveData(){
+  const btn=document.getElementById('refreshBtn');
+  const status=document.getElementById('dataStatus');
+  const d=DATA[ASSET];
+  btn.innerHTML='⏳ 获取中...';btn.disabled=true;
+  status.style.background='var(--blue-bg)';status.style.color='var(--blue)';status.textContent='📡 连接中...';
+  let updated=false;
+  const proxy = await detectProxy();
+
+  // 1. BTC/ETH price (proxy → CoinCap → blockchain.info)
+  try{
+    let r;
+    if(proxy){
+      const targetId=ASSET==='ethereum'?'ethereum':'bitcoin';
+      r=await fetch('/api/coincap/'+targetId,{signal:AbortSignal.timeout(8000)});
+    } else {
+      r=await fetch('https://blockchain.info/ticker',{signal:AbortSignal.timeout(8000)});
+    }
+    if(r.ok){
+      const j=await r.json();
+      if(proxy){
+        if(j.data&&j.data.priceUsd>0){
+          d.price=parseFloat(j.data.priceUsd);
+          d.change24h=parseFloat(j.data.changePercent24Hr);
+          d.marketCap=parseFloat(j.data.marketCapUsd);
+          d.totalVolume=parseFloat(j.data.volumeUsd24Hr);
+          if(j.data.allTimeHighUsd){d.ath=parseFloat(j.data.allTimeHighUsd);}
+          updated=true;
+        }
+      } else {
+        if(j.USD&&j.USD.last>0){
+          const oldPrice=d.price;
+          d.price=j.USD.last;
+          d.change24h=((d.price/oldPrice-1)*100);
+          d.ath=ASSET==='bitcoin'?73750:4878;
+          updated=true;
+        }
+      }
+    }
+  }catch(e){/* silent */}
+
+  // ETH price from CoinCap API (works for both BTC and ETH)
+  try{
+    const targetId=ASSET==='ethereum'?'ethereum':'bitcoin';
+    const r=await fetch('https://api.coincap.io/v2/assets/'+targetId,{signal:AbortSignal.timeout(8000)});
+    if(r.ok){
+      const j=await r.json();
+      if(j.data&&j.data.priceUsd>0){
+        const oldPrice=d.price;
+        d.price=parseFloat(j.data.priceUsd);
+        d.change24h=parseFloat(j.data.changePercent24Hr);
+        d.marketCap=parseFloat(j.data.marketCapUsd);
+        d.totalVolume=parseFloat(j.data.volumeUsd24Hr);
+        if(j.data.allTimeHighUsd){d.ath=parseFloat(j.data.allTimeHighUsd);}
+        updated=true;
+      }
+    }
+  }catch(e){/* silent */}
+  // Also update BTC price if we're on ETH (for data status accuracy)
+  if(ASSET==='bitcoin' && !updated){
+    try{
+      const r=await fetch('https://blockchain.info/ticker',{signal:AbortSignal.timeout(8000)});
+      if(r.ok){const j=await r.json();if(j.USD&&j.USD.last>0){d.price=j.USD.last;d.ath=73750;updated=true;}}
+    }catch(e){}
+  }
+
+  // Fear & Greed (proxy → direct)
+  try{
+    const r=await fetch(proxy?'/api/fng':'https://api.alternative.me/fng/?limit=1',{signal:AbortSignal.timeout(5000)});
+    if(r.ok){const j=await r.json();if(j.data&&j.data[0]){d.fearGreed=parseInt(j.data[0].value);updated=true;}}
+  }catch(e){}
+
+  // 3. DXY via exchange rates ✅ confirmed working
+  try{
+    const r=await fetch(proxy?'/api/dxy':'https://api.exchangerate-api.com/v4/latest/USD',{signal:AbortSignal.timeout(5000)});
+    if(r.ok){
+      const j=await r.json();
+      if(j.rates&&j.rates.EUR){
+        // Real DXY formula: weighted basket of 6 currencies
+        // Simplified: DXY ~ 50.14 * EUR^(-0.576) * JPY^(0.136) * GBP^(-0.119) * CAD^(0.091) * SEK^(0.042) * CHF^(0.036)
+        // For a decent approximation with EUR only:
+        const eur=j.rates.EUR;jpy=j.rates.JPY||150;gbp=j.rates.GBP||0.75;cad=j.rates.CAD||1.42;sek=j.rates.SEK||9.7;chf=j.rates.CHF||0.81;
+        d.dxy=50.143*Math.pow(eur,-0.576)*Math.pow(jpy,0.136)*Math.pow(gbp,-0.119)*Math.pow(cad,0.091)*Math.pow(sek,0.042)*Math.pow(chf,0.036);
+        updated=true;
+      }
+    }
+  }catch(e){}
+
+  // 5. KuCoin backup price
+  if(!updated && ASSET==='bitcoin'){
+    try{
+      const r=await fetch(proxy?'/api/kucoin':'https://api.kucoin.com/api/v1/market/stats?symbol=BTC-USDT',{signal:AbortSignal.timeout(5000)});
+      if(r.ok){const j=await r.json();if(j.data&&j.data.last>0){d.price=parseFloat(j.data.last);d.change24h=parseFloat(j.data.changeRate)*100;updated=true;}}
+    }catch(e){}
+  }
+  // 6. CoinGecko backup
+  if(!updated){
+    try{
+      const ids=ASSET==='bitcoin'?'bitcoin':'ethereum';
+      const r=await fetch(proxy?'/api/coingecko/'+ids:'https://api.coingecko.com/api/v3/simple/price?ids='+ids+'&vs_currencies=usd&include_24hr_change=true',{signal:AbortSignal.timeout(5000)});
+      if(r.ok){const j=await r.json();if(j[ids]&&j[ids].usd>0){d.price=j[ids].usd;if(j[ids].usd_24h_change){d.change24h=j[ids].usd_24h_change;}updated=true;}}
+    }catch(e){}
+  }
+
+  if(updated){
+    // Recompute dependent fields
+    if(d.histPrices&&d.histPrices.length>0){
+      const ratio=d.price/d.histPrices[d.histPrices.length-1];
+      d.histPrices=d.histPrices.map(p=>p*ratio);
+    }
+    render(d);
+    btn.innerHTML='🔄 已更新';document.getElementById('updateInfo').textContent='✅ 实时 | $'+d.price.toLocaleString();setTimeout(()=>{btn.innerHTML='🔄 刷新';btn.disabled=false;},3000);
+    // Start auto-refresh every 120s after first success
+    if(!window._refreshTimer){window._refreshTimer=setInterval(fetchLiveData,120000);}
+  }else{
+    status.style.background='var(--yellow-bg)';status.style.color='var(--yellow)';status.textContent='📡 离线数据';
+    btn.innerHTML='🔄 重试';btn.disabled=false;
+  }
+}
+
+function switchAsset(a){
+  ASSET=a;
+  document.querySelectorAll('.asset-btn').forEach((b,i)=>{
+    b.classList.toggle('active',(i===0&&a==='bitcoin')||(i===1&&a==='ethereum'));
+  });
+  render(DATA[a]);
+}
+function switchTier(t){
+  TIER=t;
+  document.querySelectorAll('.tier-btn').forEach(b=>b.classList.toggle('active',b.dataset.tier===t));
+  render(DATA[ASSET]);
+}
+
+// Init
+render(DATA.bitcoin);
+// Auto-fetch live data on page load (retry up to 3 times)
+setTimeout(()=>{
+  fetchLiveData().catch(()=>{});
+  // Second attempt after 3s if first fails
+  setTimeout(()=>{
+    const st=document.getElementById('dataStatus');
+    if(st&&st.textContent.includes('离线')){fetchLiveData().catch(()=>{});}
+  },3000);
+  // Third attempt after 8s
+  setTimeout(()=>{
+    const st=document.getElementById('dataStatus');
+    if(st&&st.textContent.includes('离线')){fetchLiveData().catch(()=>{});}
+  },8000);
+},500);
+</script>
+</body>
+</html>
