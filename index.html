@@ -344,7 +344,7 @@ window.onerror = function(msg, url, line, col, err) {
 const DATA = {
   bitcoin: {
     price:62583, change24h:-1.2, ath:73750, marketCap:1230e9, totalVolume:28e9,
-    fearGreed:28, dxy:105.5, mayerMultiple:0.95, rsi14:42.5, wma200:28500,
+    fearGreed:28, dxy:105.5, mayerMultiple:0.95, rsi14:42.5, wma200:65877,
     fundingRate:0.008, exchangeReserve:'declining', stablecoinLiq:'stable',
     halvingMonths:14.8,
     _week:'-3.8%', _month:'+5.2%',
@@ -771,7 +771,23 @@ async function fetchLiveData(){
       if(r.ok){const j=await r.json();if(j.data&&j.data.last>0){d.price=parseFloat(j.data.last);d.change24h=parseFloat(j.data.changeRate)*100;updated=true;}}
     }catch(e){}
   }
-  // 6. CoinGecko backup
+  // 7. Binance backup (often accessible in China, no VPN needed)
+  if(!updated){
+    try{
+      const sym=ASSET==='bitcoin'?'BTCUSDT':'ETHUSDT';
+      const r=await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol='+sym,{signal:AbortSignal.timeout(5000)});
+      if(r.ok){const j=await r.json();if(j.lastPrice>0){
+        const oldP=d.price;
+        d.price=parseFloat(j.lastPrice);
+        d.change24h=parseFloat(j.priceChangePercent);
+        d.totalVolume=parseFloat(j.quoteVolume);
+        d._high7=parseFloat(j.highPrice);
+        d._low7=parseFloat(j.lowPrice);
+        updated=true;
+      }}
+    }catch(e){}
+  }
+  // 8. CoinGecko backup
   if(!updated){
     try{
       const ids=ASSET==='bitcoin'?'bitcoin':'ethereum';
